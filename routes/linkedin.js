@@ -16,7 +16,6 @@ module.exports = function(app){
 			res.redirect('/auth'); //TODO: redirecturl somehow
 			
 		
-		
 	});
 
 }
