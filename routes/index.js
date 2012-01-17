@@ -1,7 +1,12 @@
-/*
- * GET home page.
- */
+var fs = require('fs');
 
-exports.index = function(req, res){
-  res.render('index', { title: 'Express' })
-};
+module.exports = function(app){
+    fs.readdirSync(__dirname).forEach(function(file) {
+        if (file == "index.js") return;
+        
+        
+        console.log('adding route ' + file);
+        
+        require('./' + file)(app);
+    });
+}
