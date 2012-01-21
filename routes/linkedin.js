@@ -18,15 +18,11 @@ module.exports = function(app) {
 			return;
 		}
 
-		var neo4j = require('neo4j');
-		var db = new neo4j.GraphDatabase(process.env.NEO4J_URL || 'http://localhost:7474');
-		
-		// var ('d7032f28e', 'cbbcc8cd8', 'http://2ef777643.hosted.neo4j.org:7045/auth');
 
 		// console.log('token:', req.session.token);
 
 		// TODO: find this person from the linkedIn id
-		var me = db.query(function(what){console.log(what)}, 'firstName', 'Christian');
+		var me;
 		
 		console.log(me);
 		
@@ -44,16 +40,7 @@ module.exports = function(app) {
 			
 			console.log('found me', result);
 
-			if(!me)
-				me = db.createNode(result.person, function() {
-					console.log('created node ', result.person);
-
-				});
-			else{
-				me = null;
-			}
-
-			me.save();
+			
 
 		});
 
@@ -72,9 +59,7 @@ module.exports = function(app) {
 				 result.values.forEach(function(person){
 
 					 // Create node
-					 var node = db.createNode(person);
-					 node.createRelationshipTo(me, 'friend', {})
-					 node.save();
+					 
 
 				 });
 				
