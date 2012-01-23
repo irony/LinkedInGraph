@@ -6,8 +6,8 @@
     var particleSystem = null
     
     var palette = {
-      "Africa": "#D68300",
-      "Asia": "#4D7A00",
+      "CEO": "#D68300",
+      "Developer": "#4D7A00",
       "Europe": "#6D87CF",
       "North America": "#D4E200",
       "Oceania": "#4F2170",
@@ -36,7 +36,7 @@
           // pt1:  {x:#, y:#}  source position in screen coords
           // pt2:  {x:#, y:#}  target position in screen coords
 
-          var weight = null; // Math.max(1,(edge.source.persons.length)/1)
+          var weight = edge.target.weight; //null; // Math.max(1,(edge.source.persons.length)/1)
           var color = null // edge.data.color
           if (!color || (""+color).match(/^[ \t]*$/)) color = null
 
@@ -46,10 +46,13 @@
 
             if (!isNaN(weight)) ctx.lineWidth = weight
             
+            
+            if (edge.target.data.persons) ctx.strokeStyle = edge.target.data.persons.map(function(person){return palette[person.title] }).pop() || "#888";
+/*
             if (edge.source.data.region==edge.target.data.region){
               ctx.strokeStyle = palette[edge.source.data.region]
             }
-            
+  */          
             // if (color) ctx.strokeStyle = color
             ctx.fillStyle = null
             
@@ -86,18 +89,18 @@
           // ctx.fillRect(pt.x-w/2, pt.y-7, w,14)
 
 
-          ctx.clearRect(pt.x-w/2, pt.y-7, w,14)
-
+          
           
 
           // draw the text
           if (label){
-            ctx.font = "bold " + node.data.persons.length * 3 + "px Arial"
+          	ctx.clearRect(pt.x-w/2, pt.y-7, w,14)
+		    ctx.font = "bold " + Math.max(5, node.data.persons.length * 3) + "px Arial"
             ctx.textAlign = "center"
             
-            // if (node.data.region) ctx.fillStyle = palette[node.data.region]
+            if (node.data.persons) ctx.fillStyle = node.data.persons.map(function(person){return palette[person.title] }).pop() || "#888";
             // else ctx.fillStyle = "#888888"
-            ctx.fillStyle = "#888";
+            //ctx.fillStyle = "#888";
 
             // ctx.fillText(label||"", pt.x, pt.y+4)
             ctx.fillText(label||"", pt.x, pt.y+4)
@@ -170,54 +173,27 @@
     sys.renderer = Renderer("#viewport") // our newly created renderer will have its .init() method called shortly by sys...
     
     var dom = $(elt)    
-    var _links = dom.find('ul')
-
-    var _sources = {
-      nations:'Derived from Wikipedia’s <a target="_blank" href="http://en.wikipedia.org/wiki/List_of_countries_and_territories_by_land_borders">List of countries and territories by land borders</a>',
-      states:'Derived from <a target="_blank" href="http://www.statemaster.com/graph/geo_lan_bou_bor_cou-geography-land-borders">Land borders by state</a>',
-      risk:'Derived from Garrett Robinson’s <a target="_blank" href="http://web.mit.edu/sp.268/www/risk.pdf">The Strategy of Risk</a>'
-    }
-
-    var _maps = {
-      usofa:{title:"United States", p:{stiffness:600}, source:_sources.states},
-      africa:{title:"Africa", p:{stiffness:300}, source:_sources.nations},
-      asia:{title:"Asia", p:{stiffness:500}, source:_sources.nations},
-      europe:{title:"Europe", p:{stiffness:300}, source:_sources.nations},
-      mideast:{title:"Middle East", p:{stiffness:500}, source:_sources.nations},
-      risk:{title:"Risk", p:{stiffness:400}, source:_sources.risk}
-    }
+    
     
     var that = {
       init:function(){
-        
-        $.each(_maps, function(stub, map){
-          _links.append("<li><a href='#/"+stub+"' class='"+stub+"'>"+map.title+"</a></li>")
-        })
-        _links.find('li > a').click(that.mapClick)
-        _links.find('.usofa').click()
-        return that
-      },
-      mapClick:function(e){
-        var selected = $(e.target)
-        var newMap = selected.attr('class')
-        if (newMap in _maps) that.selectMap(newMap)
-        _links.find('li > a').removeClass('active')
-        selected.addClass('active')
-        return false
-      },
-      selectMap:function(map_id){
         $.getJSON("/map.json",function(data){
           // load the raw data into the particle system as is (since it's already formatted correctly for .merge)
           var nodes = data.nodes
           $.each(nodes, function(name, info){
             info.label=name;
-	            
+	        info.weight = nodes[name].persons.length;
             console.log(name);
           })
 
-          sys.merge({nodes:data.nodes, edges:data.edges})
-          sys.parameters(_maps[map_id].p)
-          $("#dataset").html(_maps[map_id].source)
+          sys.merge({nodes:nodes, edges:data.edges})
+
+		  sys.addEdge('Deasign', 'Britny')
+		  sys.addEdge('Britny', 'TRR')
+		  sys.addEdge('Deasign', 'Beckers')
+		  sys.addEdge('Deasign', 'Britny')
+
+          // sys.parameters(_maps[map_id].p)
         })
         
       }

@@ -16,6 +16,11 @@ module.exports = function(app) {
 			res.redirect('/import');
 		})
 	});
+	
+	app.get('/progress', function(req, res){
+		
+		Person.find().stream().pipe(res);
+	})
 
 	app.get('/import', function(req, res) {
 		if(!req.session.token) {
@@ -48,7 +53,7 @@ module.exports = function(app) {
 			// find me in the database
 			Person.findOne({id : result.id}, function(error, person){
 
-				console.log('mongo found me', person);
+				// console.log('mongo found me', person);
 
 
 				me = person || new Person(result);
@@ -56,14 +61,14 @@ module.exports = function(app) {
 				if (person){
 					me.firstName = result.firstName;
 					me.lastName = result.lastName;
-					console.log('found positions', result.positions);
-					me.company = result.positions.values.filter(function(position){ return position.isCurrent}).pop();
-					console.log('parsed company', me.company);
+					//console.log('found positions', result.positions);
+					//me.company = result.positions.values.filter(function(position){ return position.isCurrent}).pop();
+					//console.log('parsed company', me.company);
 					me.id = result.id;
-					app.currentUserId = me.id;
 				}
 				me.save();			
-				console.log('saved me', me);		
+				app.currentUserId = me.id;
+				// console.log('saved me', me);		
 					
 				// find my friends
 				linkedIn.apiCall('GET', '/people/~/connections:(id,first-name,last-name,picture-url,positions)', {
@@ -74,37 +79,33 @@ module.exports = function(app) {
 						throw error;
 					}
 					else {
-		
-						 me.friends = [];  // reset before adding
-						
-						
-						 // go through all friends						
-						 result.values.forEach(function(person){
-		
-							 // find them in the database
-							 Person.findOne({id: person.id}, function(error, friend){
-							 	
-						 		if (error)
-						 			throw error;
-						 			
-								 // Create node if there aren't any notice on this person before in the database
-								 if (!friend) friend = new Person(person);
-								 
-								 // try to get the company from the current position
-								 if (person.positions)
-									 friend.company = person.positions.values.filter(function(position){ return position.isCurrent}).pop();
-								 
-								 friend.save();
-								 
-								 me.friends.push(friend);
-								 me.save();
-							 });
-		
-						 });
 						 
-						
-						
-						console.log('me saved: ', me);
+						 // find all friends that are already in the database					
+						 Person.where('id')
+						 .in(result.values.map(function(item){return item.id}))
+						 .run(function(error, dbFriends){
+						 	
+						 	console.log('found ' + dbFriends.length + ' friends in database');
+						 	
+							// replace my current friends with a a mix of existing persons in the db 							
+						 	me.friends = result.values.map(function(item){
+						 		var friend = dbFriends.filter(function(dbFriend){
+						 			dbFriend.id == item.id;	
+						 		}).pop();
+						 		
+						 		if (!friend) {
+						 			friend = new Person(item); // or add to db for those that don't exist.
+						 			friend.save();
+						 		}
+						 						 		
+						 		return friend;
+						 	});
+						 	
+						 	me.save();
+						 	
+							//console.log('me saved: ', me);
+
+						 });
 		
 						res.render('map', {
 							title : 'Connections imported',
