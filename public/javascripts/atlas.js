@@ -189,9 +189,9 @@
           sys.merge({nodes:nodes, edges:data.edges})
 
 		  sys.addEdge('Deasign', 'Britny')
-		  sys.addEdge('Britny', 'TRR')
+		  sys.addEdge('Britny', 'Trygghetsrådet')
 		  sys.addEdge('Deasign', 'Beckers')
-		  sys.addEdge('Deasign', 'Britny')
+		  sys.addEdge('Deasign', 'Klirr Stockholm')
 
           // sys.parameters(_maps[map_id].p)
         })

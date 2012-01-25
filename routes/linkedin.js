@@ -1,8 +1,8 @@
 module.exports = function(app) {
 
-	var linkedIn = require('linkedin-js')('3ao1sl5ji69k', 'TvW6VpdlFcsEuSEX', 'http://localhost:3000/auth');
+	var linkedIn = require('linkedin-js')('3ao1sl5ji69k', 'TvW6VpdlFcsEuSEX', 'http://cln-mbp:3000/auth');
 	var mongoose = require('mongoose');
-	var db = mongoose.connect('mongodb://localhost/graphTest');
+	var db = mongoose.connect(ENV['MONGOHQ_URL'] || 'mongodb://localhost/graphTest');
 	
 	
 	var Person = mongoose.model('Person', require('../models/person.js'));
@@ -70,7 +70,7 @@ module.exports = function(app) {
 				app.currentUserId = me.id;
 				// console.log('saved me', me);		
 					
-				// find my friends
+				// find my friends from LinkedIn
 				linkedIn.apiCall('GET', '/people/~/connections:(id,first-name,last-name,picture-url,positions)', {
 					token : req.session.token
 				}, function(error, result) {
@@ -79,19 +79,23 @@ module.exports = function(app) {
 						throw error;
 					}
 					else {
-						 
+
+					 	console.log('searching database for friends...');
+						
 						 // find all friends that are already in the database					
 						 Person.where('id')
 						 .in(result.values.map(function(item){return item.id}))
 						 .run(function(error, dbFriends){
 						 	
-						 	console.log('found ' + dbFriends.length + ' friends in database');
+						 	console.log('found ' + dbFriends.length + ' friends in database', me.friends);
 						 	
 							// replace my current friends with a a mix of existing persons in the db 							
 						 	me.friends = result.values.map(function(item){
 						 		var friend = dbFriends.filter(function(dbFriend){
-						 			dbFriend.id == item.id;	
+						 			return dbFriend.id == item.id;	
 						 		}).pop();
+						 		
+						 		console.log('found friend in db', friend, item);
 						 		
 						 		if (!friend) {
 						 			friend = new Person(item); // or add to db for those that don't exist.

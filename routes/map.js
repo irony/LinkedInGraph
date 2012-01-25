@@ -57,6 +57,7 @@ module.exports = function(app){
 					if (person){
 						// load the details and fill the node and edges variables for two levels of friends	
 						fillNodes(person, 2, function(){
+							
 							res.json({nodes: nodes, edges : edges});				
 						});
 					} else {
