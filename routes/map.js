@@ -47,31 +47,31 @@ module.exports = function(app){
 			if (callback)
 				callback(person);
 
-		}		
+		};
 		
 		
 		Person.findOne({id : req.query['id'] || app.currentUserId || 'X8O4G03QY3'}) // hardcoded id now to christian
-			  .populate('friends')
-			  .run(function(err, person){
-					console.log('found person with full friends', person);
+				.populate('friends')
+				.run(function(err, person){
+					console.log('found person with full friends');
 					if (person){
-						// load the details and fill the node and edges variables for two levels of friends	
+						// load the details and fill the node and edges variables for two levels of friends
 						fillNodes(person, 2, function(){
 							
-							res.json({nodes: nodes, edges : edges});				
+							res.json({nodes: nodes, edges : edges});
 						});
 					} else {
-						res.json({nodes: nodes, edges : edges});				
+						res.json({nodes: nodes, edges : edges});
 					}
 
-			  });
+				});
 
     });
         
     var getCompanyName = function(person)
     {
-    	return person.company ? person.company.company.name.replace(' AB', '') : null; 
-    }
+		return person.company ? person.company.company.name.replace(' AB', '') : null;
+    };
     
     app.get('/map', function(req, res){
     		res.render('map', {

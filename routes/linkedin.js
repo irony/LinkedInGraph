@@ -1,12 +1,13 @@
 module.exports = function(app) {
 
-	var linkedIn = require('linkedin-js')('3ao1sl5ji69k', 'TvW6VpdlFcsEuSEX', 'http://cln-mbp:3000/auth');
+	var linkedIn = require('linkedin-js')('3ao1sl5ji69k', 'TvW6VpdlFcsEuSEX', 'http://localhost:3000/auth');
 	var mongoose = require('mongoose');
-	var db = mongoose.connect(ENV['MONGOHQ_URL'] || 'mongodb://localhost/graphTest');
-	
+	var db = mongoose.connect(process.env['MONGOHQ_URL'] || 'mongodb://localhost/graphTest');
+	var async = require('async');
 	
 	var Person = mongoose.model('Person', require('../models/person.js'));
 	var Connection = mongoose.model('Connection', require('../models/connection.js'));
+
 
 	app.get('/auth', function(req, res) {
 
@@ -14,13 +15,13 @@ module.exports = function(app) {
 			req.session.token = token;
 
 			res.redirect('/import');
-		})
+		});
 	});
 	
 	app.get('/progress', function(req, res){
 		
 		Person.find().stream().pipe(res);
-	})
+	});
 
 	app.get('/import', function(req, res) {
 		if(!req.session.token) {
@@ -54,7 +55,10 @@ module.exports = function(app) {
 			Person.findOne({id : result.id}, function(error, person){
 
 				// console.log('mongo found me', person);
-
+				if (error){
+					console.log('error', error);
+					return;
+				}
 
 				me = person || new Person(result);
 
@@ -66,9 +70,8 @@ module.exports = function(app) {
 					//console.log('parsed company', me.company);
 					me.id = result.id;
 				}
-				me.save();			
+				me.save();
 				app.currentUserId = me.id;
-				// console.log('saved me', me);		
 					
 				// find my friends from LinkedIn
 				linkedIn.apiCall('GET', '/people/~/connections:(id,first-name,last-name,picture-url,positions)', {
@@ -80,36 +83,43 @@ module.exports = function(app) {
 					}
 					else {
 
-					 	console.log('searching database for friends...');
+						console.log('searching database for friends...');
 						
-						 // find all friends that are already in the database					
-						 Person.where('id')
-						 .in(result.values.map(function(item){return item.id}))
-						 .run(function(error, dbFriends){
-						 	
-						 	console.log('found ' + dbFriends.length + ' friends in database', me.friends);
-						 	
-							// replace my current friends with a a mix of existing persons in the db 							
-						 	me.friends = result.values.map(function(item){
-						 		var friend = dbFriends.filter(function(dbFriend){
-						 			return dbFriend.id == item.id;	
-						 		}).pop();
-						 		
-						 		console.log('found friend in db', friend, item);
-						 		
-						 		if (!friend) {
-						 			friend = new Person(item); // or add to db for those that don't exist.
-						 			friend.save();
-						 		}
-						 						 		
-						 		return friend;
-						 	});
-						 	
-						 	me.save();
-						 	
+						// find all friends that are already in the database
+						Person.where('id')
+						.in(result.values.map(function(item){return item.id;}))
+						.run(function(error, dbFriends){
+							console.log('found ' + dbFriends.length + ' friends in database');
+
+							// replace my current friends with a a mix of existing persons in the db
+							async.map(result.values, function(item, callback){
+								var self = this;
+								var friend = dbFriends.filter(function(dbFriend){
+									return dbFriend.id == item.id;
+								}).pop();
+								
+								if (!friend) {
+									friend = new Person(item); // or add to db for those that don't exist.
+									friend.save(function(){
+										console.log('saving friend', friend.id);
+										callback(null, friend);
+									});
+								} else {
+									console.log('found friend', friend.id);
+									callback(null, friend);
+								}
+							}, function(err, friends){
+								console.log('friends:', friends.length);
+
+								me.friends = friends;
+								me.save();
+								console.log('saved me');
+							});
+							
+							
 							//console.log('me saved: ', me);
 
-						 });
+						});
 		
 						res.render('map', {
 							title : 'Connections imported',
