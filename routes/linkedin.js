@@ -1,9 +1,9 @@
 module.exports = function(app) {
 
-	var linkedIn = require('linkedin-js')('3ao1sl5ji69k', 'TvW6VpdlFcsEuSEX', 'http://localhost:3000/auth');
 	var mongoose = require('mongoose');
 	var db = mongoose.connect(process.env['MONGOHQ_URL'] || 'mongodb://localhost/graphTest');
 	var async = require('async');
+	var linkedInApi = {userName : '3ao1sl5ji69k', password: 'TvW6VpdlFcsEuSEX'};
 	
 	var Person = mongoose.model('Person', require('../models/person.js'));
 	var Connection = mongoose.model('Connection', require('../models/connection.js'));
@@ -11,6 +11,7 @@ module.exports = function(app) {
 
 	app.get('/auth', function(req, res) {
 
+		var linkedIn = require('linkedin-js')(linkedInApi.userName, linkedInApi.password, req.url);
 		linkedIn.getAccessToken(req, res, function(error, token) {
 			req.session.token = token;
 
@@ -37,7 +38,9 @@ module.exports = function(app) {
 		
 		console.log(me);
 		
-				
+		var baseUrl = request.headers.protocol + request.headers.host;
+
+		var linkedIn = require('linkedin-js')(linkedInApi.userName, linkedInApi.password, baseUrl + '/auth');
 
 		linkedIn.apiCall('GET', '/people/~:(id,first-name,last-name,picture-url,positions)', {
 			token : req.session.token

@@ -6,7 +6,7 @@ module.exports = function(app){
         
         
       	var mongoose = require('mongoose');
-		var db = mongoose.connect('mongodb://localhost/graphTest');
+		var db = mongoose.connect(process.env['MONGOHQ_URL'] || 'mongodb://localhost/graphTest');
 		
 		var Person = mongoose.model('Person', require('../models/person.js'));
 		
