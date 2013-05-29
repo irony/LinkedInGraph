@@ -10,8 +10,9 @@ module.exports = function(app) {
 
 
 	app.get('/auth', function(req, res) {
+		var callbackUrl = req.host + ":" + req.headers.protocol + "/import";
 
-		var linkedIn = require('linkedin-js')(linkedInApi.userName, linkedInApi.password, req.url);
+		var linkedIn = require('linkedin-js')(linkedInApi.userName, linkedInApi.password, callbackUrl);
 		linkedIn.getAccessToken(req, res, function(error, token) {
 			req.session.token = token;
 
