@@ -15,7 +15,7 @@ module.exports = function(app) {
 		linkedIn.getAccessToken(req, res, function(error, token) {
 			req.session.token = token;
 
-			res.redirect('/import');
+			res.redirect('http://' + req.host + '/import');
 		});
 	});
 	
