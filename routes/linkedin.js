@@ -26,7 +26,7 @@ module.exports = function(app) {
 
 	app.get('/import', function(req, res) {
 		if(!req.session.token) {
-			res.redirect('/auth');
+			res.redirect('http://' + req.host + '/auth');
 			//TODO: redirecturl somehow
 			return;
 		}
