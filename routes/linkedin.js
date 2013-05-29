@@ -26,7 +26,7 @@ module.exports = function(app) {
 
 	app.get('/import', function(req, res) {
 		if(!req.session.token) {
-			res.redirect('http://' + req.host + '/auth');
+			res.redirect('/auth');
 			//TODO: redirecturl somehow
 			return;
 		}
@@ -38,7 +38,7 @@ module.exports = function(app) {
 		
 		console.log(me);
 		
-		var baseUrl = request.headers.protocol + request.headers.host;
+		var baseUrl = req.host + ":" + req.headers.protocol;
 
 		var linkedIn = require('linkedin-js')(linkedInApi.userName, linkedInApi.password, baseUrl + '/auth');
 
