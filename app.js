@@ -32,5 +32,5 @@ app.configure('production', function(){
 var routes = require('./routes')(app);
 
 
-app.listen(process.env.PORT || 3000);
+app.listen(process.env.PORT || 3002);
 console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
