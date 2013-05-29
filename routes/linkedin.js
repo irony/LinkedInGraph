@@ -10,13 +10,13 @@ module.exports = function(app) {
 
 
 	app.get('/auth', function(req, res) {
-		var callbackUrl = req.host + ":" + req.headers.protocol + "/import";
+		var callbackUrl = "http://" + req.headers.host + "/import";
 
 		var linkedIn = require('linkedin-js')(linkedInApi.userName, linkedInApi.password, callbackUrl);
 		linkedIn.getAccessToken(req, res, function(error, token) {
 			req.session.token = token;
 
-			res.redirect('http://' + req.host + '/import');
+			res.redirect('/map');
 		});
 	});
 	
@@ -26,7 +26,8 @@ module.exports = function(app) {
 	});
 
 	app.get('/import', function(req, res) {
-		if(!req.session.token) {
+		if(!req.session.auth) {
+		console.log(req)
 			res.redirect('/auth');
 			//TODO: redirecturl somehow
 			return;
@@ -44,7 +45,7 @@ module.exports = function(app) {
 		var linkedIn = require('linkedin-js')(linkedInApi.userName, linkedInApi.password, baseUrl + '/auth');
 
 		linkedIn.apiCall('GET', '/people/~:(id,first-name,last-name,picture-url,positions)', {
-			token : req.session.token
+			token : req.session.auth
 		}, function(error, result) {
 
 			if(error)
